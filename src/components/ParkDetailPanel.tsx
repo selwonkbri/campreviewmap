@@ -22,14 +22,14 @@ export function ParkDetailPanel({ park, reviews, onClose }: Props) {
       {park && (
         <>
           <motion.div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
           />
           <motion.aside
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-xl overflow-y-auto bg-card shadow-2xl"
+            className="fixed right-0 top-0 z-[1001] h-full w-full max-w-xl overflow-y-auto bg-card shadow-2xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
