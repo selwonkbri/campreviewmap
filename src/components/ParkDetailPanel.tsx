@@ -135,13 +135,13 @@ function PanelContent({
           <Plus className="h-4 w-4" /> Add personal field notes
         </Button>
 
-        {personal.length > 0 && (
+        {mine.length > 0 && (
           <section>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Your field notes
             </h3>
             <div className="space-y-3">
-              {personal.map((r) => (
+              {mine.map((r) => (
                 <div key={r.entry_id} className="rounded-lg border border-accent/30 bg-accent/5 p-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
