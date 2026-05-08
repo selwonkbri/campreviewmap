@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Wifi, Truck, AlertTriangle, Plus, Calendar, Star } from "lucide-react";
-import type { Park, Review } from "@/lib/parks";
-import { sentimentScore, bigRigWarnings, getPersonalReviews, addPersonalReview, membershipLabel } from "@/lib/parks";
+import type { Park, Review, PersonalReview } from "@/lib/parks";
+import { sentimentScore, bigRigWarnings, membershipLabel } from "@/lib/parks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
@@ -10,12 +10,12 @@ import { PersonalReviewForm } from "./PersonalReviewForm";
 interface Props {
   park: Park | null;
   reviews: Review[];
+  personal: PersonalReview[];
   onClose: () => void;
 }
 
-export function ParkDetailPanel({ park, reviews, onClose }: Props) {
+export function ParkDetailPanel({ park, reviews, personal, onClose }: Props) {
   const [showForm, setShowForm] = useState(false);
-  const [, setTick] = useState(0);
 
   return (
     <AnimatePresence>
@@ -38,19 +38,16 @@ export function ParkDetailPanel({ park, reviews, onClose }: Props) {
             <PanelContent
               park={park}
               reviews={reviews}
+              personal={personal}
               onClose={onClose}
               onAdd={() => setShowForm(true)}
-              refreshKey={() => setTick((t) => t + 1)}
             />
           </motion.aside>
           {showForm && (
             <PersonalReviewForm
               park={park}
               onClose={() => setShowForm(false)}
-              onSaved={() => {
-                setShowForm(false);
-                setTick((t) => t + 1);
-              }}
+              onSaved={() => setShowForm(false)}
             />
           )}
         </>
@@ -62,19 +59,20 @@ export function ParkDetailPanel({ park, reviews, onClose }: Props) {
 function PanelContent({
   park,
   reviews,
+  personal,
   onClose,
   onAdd,
 }: {
   park: Park;
   reviews: Review[];
+  personal: PersonalReview[];
   onClose: () => void;
   onAdd: () => void;
-  refreshKey: () => void;
 }) {
   const sent = sentimentScore(park.park_id, reviews);
   const warnings = bigRigWarnings(park, reviews);
   const community = reviews.filter((r) => r.park_id === park.park_id);
-  const personal = getPersonalReviews().filter((r) => r.park_id === park.park_id);
+  const mine = personal.filter((r) => r.park_id === park.park_id);
 
   return (
     <div className="flex flex-col">
@@ -137,13 +135,13 @@ function PanelContent({
           <Plus className="h-4 w-4" /> Add personal field notes
         </Button>
 
-        {personal.length > 0 && (
+        {mine.length > 0 && (
           <section>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Your field notes
             </h3>
             <div className="space-y-3">
-              {personal.map((r) => (
+              {mine.map((r) => (
                 <div key={r.entry_id} className="rounded-lg border border-accent/30 bg-accent/5 p-4">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -154,8 +152,8 @@ function PanelContent({
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    {r.site_number && <span>Site #{r.site_number}</span>}
-                    {r.wifi_quality && <span>WiFi: {r.wifi_quality}</span>}
+                    {r.big_rig_verdict && <span>Big rig: {r.big_rig_verdict}</span>}
+                    {r.tags && <span>{r.tags}</span>}
                   </div>
                   {r.notes && <p className="mt-2 text-sm leading-relaxed">{r.notes}</p>}
                 </div>
