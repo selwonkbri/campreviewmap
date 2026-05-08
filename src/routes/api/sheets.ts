@@ -42,7 +42,7 @@ function rowsToObjects(rows: Row[]): Record<string, string>[] {
   });
 }
 
-const cache = coordsCache as Record<string, [number, number]>;
+const cache = coordsCache as unknown as Record<string, [number, number]>;
 
 function parsePark(o: Record<string, string>) {
   const lat = parseFloat(o.gps_lat);
