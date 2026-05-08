@@ -152,8 +152,8 @@ function PanelContent({
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    {r.site_number && <span>Site #{r.site_number}</span>}
-                    {r.wifi_quality && <span>WiFi: {r.wifi_quality}</span>}
+                    {r.big_rig_verdict && <span>Big rig: {r.big_rig_verdict}</span>}
+                    {r.tags && <span>{r.tags}</span>}
                   </div>
                   {r.notes && <p className="mt-2 text-sm leading-relaxed">{r.notes}</p>}
                 </div>
