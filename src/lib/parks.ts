@@ -1,4 +1,4 @@
-import data from "@/data/parks.json";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export type Park = {
   park_id: string;
@@ -37,31 +37,44 @@ export type PersonalReview = {
   park_id: string;
   park_name: string;
   stay_start: string;
-  site_number: string;
-  wifi_quality: string;
-  rating_overall: number;
+  stay_end: string;
+  rating_overall: string | number;
+  rating_sites?: string | number;
+  rating_amenities?: string | number;
+  rating_cell?: string | number;
+  big_rig_verdict: string;
+  tags: string;
   notes: string;
-  created_at: string;
+  // legacy local fields
+  site_number?: string;
+  wifi_quality?: string;
 };
 
-export const parks = data.parks as Park[];
-export const reviews = data.reviews as Review[];
+export type SheetsPayload = {
+  parks: Park[];
+  reviews: Review[];
+  personal: PersonalReview[];
+  fetched_at: string;
+};
 
 export type Sentiment = "positive" | "mixed" | "negative" | "unknown";
 
 export function membershipLabel(t: string) {
-  if (t.startsWith("TT")) return "Thousand Trails";
-  if (t.toLowerCase().includes("encore")) return "Encore";
+  if (t?.startsWith("TT")) return "Thousand Trails";
+  if (t?.toLowerCase().includes("encore")) return "Encore";
   return t || "Other";
 }
 
 export function membershipBucket(t: string): "TT" | "Encore" | "Other" {
-  if (t.startsWith("TT")) return "TT";
-  if (t.toLowerCase().includes("encore")) return "Encore";
+  if (t?.startsWith("TT")) return "TT";
+  if (t?.toLowerCase().includes("encore")) return "Encore";
   return "Other";
 }
 
-export function sentimentScore(parkId: string, allReviews: Review[]): { score: number; label: Sentiment; count: number } {
+export function sentimentScore(
+  parkId: string,
+  allReviews: Review[],
+): { score: number; label: Sentiment; count: number } {
   const r = allReviews.filter((x) => x.park_id === parkId);
   if (r.length === 0) return { score: 0, label: "unknown", count: 0 };
   const map: Record<string, number> = { positive: 1, mixed: 0, negative: -1 };
@@ -81,25 +94,49 @@ export function bigRigWarnings(park: Park, allReviews: Review[]) {
   return Array.from(new Set(flags));
 }
 
-const STORAGE_KEY = "rv_personal_reviews_v1";
+const QUERY_KEY = ["sheets"] as const;
 
-export function getPersonalReviews(): PersonalReview[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
+async function fetchSheets(): Promise<SheetsPayload> {
+  const res = await fetch("/api/sheets");
+  if (!res.ok) throw new Error(`Sheets fetch failed (${res.status})`);
+  return res.json();
 }
 
-export function addPersonalReview(r: Omit<PersonalReview, "entry_id" | "created_at">) {
-  const list = getPersonalReviews();
-  const entry: PersonalReview = {
-    ...r,
-    entry_id: `P-${Date.now()}`,
-    created_at: new Date().toISOString(),
-  };
-  list.unshift(entry);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  return entry;
+export function useSheets() {
+  return useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: fetchSheets,
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export type NewPersonalReview = {
+  park_id: string;
+  park_name: string;
+  stay_start: string;
+  stay_end?: string;
+  rating_overall: number;
+  big_rig_verdict?: string;
+  tags?: string;
+  notes: string;
+};
+
+export function useAddPersonalReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: NewPersonalReview) => {
+      const res = await fetch("/api/sheets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || "Save failed");
+      }
+      return res.json() as Promise<{ ok: boolean; entry_id: string }>;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  });
 }
