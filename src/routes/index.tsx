@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo, useState } from "react";
-import { Search, MapIcon, List, Filter, Mountain } from "lucide-react";
+import { Search, MapIcon, List, Filter, Mountain, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { parks, reviews, sentimentScore, membershipBucket, membershipLabel, type Park } from "@/lib/parks";
+import {
+  useSheets,
+  sentimentScore,
+  membershipBucket,
+  membershipLabel,
+  type Park,
+} from "@/lib/parks";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
 
 const IntelligenceMap = lazy(() =>
@@ -16,9 +22,16 @@ export const Route = createFileRoute("/")({
   ssr: false,
 });
 
-const STATES = Array.from(new Set(parks.map((p) => p.state).filter(Boolean))).sort();
-
 function Index() {
+  const { data, isLoading, isFetching, refetch, error } = useSheets();
+  const parks = data?.parks ?? [];
+  const reviews = data?.reviews ?? [];
+
+  const states = useMemo(
+    () => Array.from(new Set(parks.map((p) => p.state).filter(Boolean))).sort(),
+    [parks],
+  );
+
   const [query, setQuery] = useState("");
   const [membership, setMembership] = useState<"all" | "TT" | "Encore">("all");
   const [state, setState] = useState<string>("all");
@@ -37,12 +50,16 @@ function Index() {
       if (bigRig && p.big_rig_friendly !== "yes") return false;
       const s = sentimentScore(p.park_id, reviews);
       if (minSent === "positive" && s.label !== "positive") return false;
-      if (minSent === "mixed" && (s.label === "negative")) return false;
+      if (minSent === "mixed" && s.label === "negative") return false;
       return true;
     });
-  }, [query, membership, state, bigRig, minSent]);
+  }, [parks, reviews, query, membership, state, bigRig, minSent]);
 
   const selected = parks.find((p) => p.park_id === selectedId) || null;
+
+  const syncedAgo = data?.fetched_at
+    ? Math.max(0, Math.round((Date.now() - new Date(data.fetched_at).getTime()) / 60000))
+    : null;
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
@@ -68,6 +85,24 @@ function Index() {
               className="h-10 border-border bg-background/60 pl-9"
             />
           </div>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden gap-1.5 text-xs text-muted-foreground sm:inline-flex"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            title={data?.fetched_at ? `Synced ${new Date(data.fetched_at).toLocaleTimeString()}` : "Sync"}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            {isFetching
+              ? "Syncing…"
+              : syncedAgo === null
+                ? "Sync"
+                : syncedAgo === 0
+                  ? "Just synced"
+                  : `${syncedAgo}m ago`}
+          </Button>
 
           <Button
             variant="outline"
@@ -115,7 +150,7 @@ function Index() {
                 onChange={(e) => setState(e.target.value)}
               >
                 <option value="all">All</option>
-                {STATES.map((s) => (
+                {states.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
@@ -147,20 +182,41 @@ function Index() {
         )}
       </header>
 
+      {error && (
+        <div className="border-b border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-xs text-destructive-foreground">
+          Couldn't reach Google Sheets. <button className="underline" onClick={() => refetch()}>Retry</button>
+        </div>
+      )}
+
       <main className="relative grid flex-1 overflow-hidden lg:grid-cols-[1fr_28rem]">
         <div className={`${view === "map" ? "block" : "hidden"} lg:block`}>
-          <Suspense
-            fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading map…</div>}
-          >
-            <IntelligenceMap parks={filtered} reviews={reviews} selectedId={selectedId} onSelect={setSelectedId} />
-          </Suspense>
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              Loading parks from Google Sheets…
+            </div>
+          ) : (
+            <Suspense
+              fallback={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading map…</div>}
+            >
+              <IntelligenceMap parks={filtered} reviews={reviews} selectedId={selectedId} onSelect={setSelectedId} />
+            </Suspense>
+          )}
         </div>
         <aside className={`${view === "list" ? "block" : "hidden"} overflow-y-auto border-l border-border/60 bg-card/40 lg:block`}>
-          <ParkList parks={filtered} selectedId={selectedId} onSelect={setSelectedId} />
+          {isLoading ? (
+            <div className="p-6 text-sm text-muted-foreground">Loading…</div>
+          ) : (
+            <ParkList parks={filtered} reviews={reviews} selectedId={selectedId} onSelect={setSelectedId} />
+          )}
         </aside>
       </main>
 
-      <ParkDetailPanel park={selected} reviews={reviews} onClose={() => setSelectedId(null)} />
+      <ParkDetailPanel
+        park={selected}
+        reviews={reviews}
+        personal={data?.personal ?? []}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
   );
 }
@@ -176,10 +232,12 @@ function FilterChip({ label, children }: { label: string; children: React.ReactN
 
 function ParkList({
   parks: items,
+  reviews,
   selectedId,
   onSelect,
 }: {
   parks: Park[];
+  reviews: import("@/lib/parks").Review[];
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
