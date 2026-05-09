@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Park = {
   park_id: string;
@@ -45,7 +46,6 @@ export type PersonalReview = {
   big_rig_verdict: string;
   tags: string;
   notes: string;
-  // legacy local fields
   site_number?: string;
   wifi_quality?: string;
 };
@@ -94,18 +94,76 @@ export function bigRigWarnings(park: Park, allReviews: Review[]) {
   return Array.from(new Set(flags));
 }
 
-const QUERY_KEY = ["sheets"] as const;
+const QUERY_KEY = ["parks-data"] as const;
 
-async function fetchSheets(): Promise<SheetsPayload> {
-  const res = await fetch("/api/sheets");
-  if (!res.ok) throw new Error(`Sheets fetch failed (${res.status})`);
-  return res.json();
+function s(v: unknown): string {
+  return v == null ? "" : String(v);
+}
+
+async function fetchAll(): Promise<SheetsPayload> {
+  const [parksRes, communityRes, personalRes] = await Promise.all([
+    supabase.from("parks").select("*"),
+    supabase.from("reviews_community").select("*"),
+    supabase.from("reviews_personal").select("*").order("created_at", { ascending: false }),
+  ]);
+  if (parksRes.error) throw parksRes.error;
+  if (communityRes.error) throw communityRes.error;
+  if (personalRes.error) throw personalRes.error;
+
+  const parks: Park[] = (parksRes.data ?? []).map((p) => ({
+    park_id: p.park_id,
+    park_name: p.park_name,
+    membership_type: s(p.membership_type),
+    state: s(p.state),
+    city: s(p.city),
+    region: s(p.region),
+    address: s(p.address),
+    lat: p.lat,
+    lon: p.lon,
+    big_rig_friendly: s(p.big_rig_friendly),
+    cell_quality: s(p.cell_quality),
+    key_amenities: s(p.key_amenities),
+    nearby_highlights: s(p.nearby_highlights),
+    last_updated: s(p.last_updated),
+    notes: s(p.notes),
+  }));
+
+  const reviews: Review[] = (communityRes.data ?? []).map((r) => ({
+    review_id: r.review_id,
+    park_id: s(r.park_id),
+    park_name: s(r.park_name),
+    source_type: s(r.source_type),
+    source_url: s(r.source_url),
+    review_date: s(r.review_date),
+    sentiment: s(r.sentiment),
+    big_rig_flag: s(r.big_rig_flag),
+    tags: s(r.tags),
+    summary: s(r.summary),
+    raw_quote: s(r.raw_quote),
+  }));
+
+  const personal: PersonalReview[] = (personalRes.data ?? []).map((r) => ({
+    entry_id: r.entry_id,
+    park_id: s(r.park_id),
+    park_name: s(r.park_name),
+    stay_start: s(r.stay_start),
+    stay_end: s(r.stay_end),
+    rating_overall: r.rating_overall ?? "",
+    rating_sites: r.rating_sites ?? undefined,
+    rating_amenities: r.rating_amenities ?? undefined,
+    rating_cell: r.rating_cell ?? undefined,
+    big_rig_verdict: s(r.big_rig_verdict),
+    tags: s(r.tags),
+    notes: s(r.notes),
+  }));
+
+  return { parks, reviews, personal, fetched_at: new Date().toISOString() };
 }
 
 export function useSheets() {
   return useQuery({
     queryKey: QUERY_KEY,
-    queryFn: fetchSheets,
+    queryFn: fetchAll,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
   });
@@ -126,16 +184,22 @@ export function useAddPersonalReview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewPersonalReview) => {
-      const res = await fetch("/api/sheets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || "Save failed");
-      }
-      return res.json() as Promise<{ ok: boolean; entry_id: string }>;
+      const { data, error } = await supabase
+        .from("reviews_personal")
+        .insert({
+          park_id: input.park_id,
+          park_name: input.park_name,
+          stay_start: input.stay_start || null,
+          stay_end: input.stay_end || null,
+          rating_overall: input.rating_overall,
+          big_rig_verdict: input.big_rig_verdict || null,
+          tags: input.tags || null,
+          notes: input.notes,
+        })
+        .select("entry_id")
+        .single();
+      if (error) throw error;
+      return { ok: true, entry_id: data.entry_id as string };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   });
