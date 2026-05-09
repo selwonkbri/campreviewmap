@@ -1,19 +1,59 @@
-## Findings
+## Migrate backend from Google Sheets to Lovable Cloud (Supabase)
 
-- **Google Sheets connection found:** "Brian's Google Sheets" (`std_01kr1gcks2ejytxm9e2r8904xn`)
-- **Status:** Linkable, you have access, but **not yet linked to this project**
-- **Spreadsheet ID** (from your URL): `13eLALZ_RDVGXf_QgnblMi-nYhXsbnxCr2ruqNDpACuc`
-- **Verification:** Cannot verify `parks_master` / `reviews_community` / `reviews_personal` tabs until the connection is linked — gateway calls require the project-scoped API key.
+### 1. Enable Lovable Cloud
+Provisions Postgres, auth, and the server-side Supabase clients. No Google Sheets calls after this is done.
 
-## Next steps (on approval)
+### 2. Create three tables (via migration)
 
-1. Link "Brian's Google Sheets" to this project via the connector picker.
-2. Hit the gateway to confirm the spreadsheet is reachable and list its tabs:
-   - `GET /v4/spreadsheets/13eLALZ_RDVGXf_QgnblMi-nYhXsbnxCr2ruqNDpACuc?fields=sheets.properties.title`
-3. Pull the header row from each tab to confirm column names match the `Park` / `Review` types in `src/lib/parks.ts`:
-   - `parks_master!1:1`
-   - `reviews_community!1:1`
-   - `reviews_personal!1:1` (create with the 9-column header if missing)
-4. Report back: tab list, header diffs (if any), and whether `reviews_personal` exists.
+**`parks`** — one row per park
+- `park_id` (text, primary key) — keep existing IDs like `TT-NW-001`
+- `park_name`, `membership_type`, `state`, `city`, `region`, `address` (text)
+- `lat`, `lon` (double precision, nullable)
+- `big_rig_friendly`, `cell_quality`, `key_amenities`, `nearby_highlights`, `notes` (text)
+- `last_updated` (timestamptz, default now())
 
-No code changes happen in this step — it's purely the link + read-only verification so we know the live integration will work before wiring up the server routes.
+**`reviews_community`** — scraped/aggregated reviews
+- `review_id` (text, primary key)
+- `park_id` (text, FK → parks)
+- `park_name`, `source_type`, `source_url`, `sentiment`, `big_rig_flag`, `tags`, `summary`, `raw_quote` (text)
+- `review_date` (date)
+
+**`reviews_personal`** — your field notes
+- `entry_id` (uuid, default gen_random_uuid(), primary key)
+- `park_id` (text, FK → parks)
+- `park_name` (text)
+- `stay_start`, `stay_end` (date, nullable)
+- `rating_overall`, `rating_sites`, `rating_amenities`, `rating_cell` (numeric, nullable)
+- `big_rig_verdict`, `tags`, `notes` (text)
+- `created_at` (timestamptz, default now())
+
+### 3. RLS policies
+Per your choice (no auth required for personal reviews):
+- `parks` and `reviews_community`: public SELECT only.
+- `reviews_personal`: public SELECT and public INSERT, no UPDATE/DELETE from clients.
+
+### 4. One-time data import
+Run a server function (admin client) that:
+1. Fetches `parks_master`, `reviews_community`, `reviews_personal` from the live Google Sheet using the existing connector.
+2. Upserts into the three Supabase tables.
+3. Reports counts back to me. I'll run it once, confirm row counts, then we delete the import endpoint.
+
+Coordinates fallback (`src/data/coords-cache.json`) is applied during the import for parks with empty GPS, then the cache file is deleted.
+
+### 5. Replace the data layer
+- Rewrite `src/routes/api/sheets.ts` → `src/routes/api/data.ts` (or delete it and use `createServerFn`s) backed by Supabase.
+- Update `src/lib/parks.ts`:
+  - `useSheets()` → `useParksData()` reading from Supabase via a server fn (parks + community + personal in one call).
+  - `useAddPersonalReview()` → inserts into `reviews_personal` via Supabase.
+- `PersonalReviewForm` and `ParkDetailPanel` keep their current props/shape — only the data source changes.
+- Header "Sync" indicator stays but now reflects the React Query fetch time against Supabase.
+
+### 6. Disconnect Google Sheets
+- Remove the `google_sheets` connector usage from code.
+- Delete `src/data/coords-cache.json` and `src/data/parks.json` once the import is verified.
+- Remove `GOOGLE_SHEETS_API_KEY` from secrets.
+
+### Result
+- App reads/writes against Supabase only.
+- Field-note submissions persist instantly with no third-party dependency.
+- Schema mirrors the current sheet, so the UI and types barely change.
