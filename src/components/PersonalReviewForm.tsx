@@ -54,10 +54,10 @@ export function PersonalReviewForm({ park, onClose, onSaved }: Props) {
               tags: tags.trim(),
               notes: notes.trim(),
             });
-            toast.success("Saved to Google Sheet");
+            toast.success("Field notes saved");
             onSaved();
           } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Couldn't save to sheet");
+            toast.error(err instanceof Error ? err.message : "Couldn't save notes");
           }
         }}
         className="w-full max-w-lg rounded-t-2xl bg-card p-6 shadow-2xl sm:rounded-2xl"
@@ -132,7 +132,7 @@ export function PersonalReviewForm({ park, onClose, onSaved }: Props) {
             className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? "Saving…" : "Save to sheet"}
+            {mutation.isPending ? "Saving…" : "Save notes"}
           </Button>
         </div>
       </motion.form>
