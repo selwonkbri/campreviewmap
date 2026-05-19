@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseExternal as supabase } from "@/integrations/supabase/external";
 
 export type Park = {
   park_id: string;
@@ -46,8 +46,6 @@ export type PersonalReview = {
   big_rig_verdict: string;
   tags: string;
   notes: string;
-  site_number?: string;
-  wifi_quality?: string;
 };
 
 export type SheetsPayload = {
@@ -71,6 +69,14 @@ export function membershipBucket(t: string): "TT" | "Encore" | "Other" {
   return "Other";
 }
 
+export function parseTags(raw: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export function sentimentScore(
   parkId: string,
   allReviews: Review[],
@@ -88,9 +94,17 @@ export function sentimentScore(
 
 export function bigRigWarnings(park: Park, allReviews: Review[]) {
   const flags = allReviews
-    .filter((r) => r.park_id === park.park_id && r.big_rig_flag && r.big_rig_flag !== "none")
+    .filter(
+      (r) =>
+        r.park_id === park.park_id &&
+        r.big_rig_flag &&
+        r.big_rig_flag.toLowerCase() !== "none" &&
+        r.big_rig_flag.toLowerCase() !== "unknown",
+    )
     .map((r) => r.big_rig_flag);
-  if (park.big_rig_friendly === "no") flags.unshift("Park flagged: not big-rig friendly");
+  if (park.big_rig_friendly?.toLowerCase() === "no") {
+    flags.unshift("Park flagged: not big-rig friendly");
+  }
   return Array.from(new Set(flags));
 }
 
@@ -100,26 +114,32 @@ function s(v: unknown): string {
   return v == null ? "" : String(v);
 }
 
+function num(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 async function fetchAll(): Promise<SheetsPayload> {
   const [parksRes, communityRes, personalRes] = await Promise.all([
-    supabase.from("parks").select("*"),
+    supabase.from("parks_master").select("*"),
     supabase.from("reviews_community").select("*"),
-    supabase.from("reviews_personal").select("*").order("created_at", { ascending: false }),
+    supabase.from("reviews_personal").select("*"),
   ]);
   if (parksRes.error) throw parksRes.error;
   if (communityRes.error) throw communityRes.error;
   if (personalRes.error) throw personalRes.error;
 
-  const parks: Park[] = (parksRes.data ?? []).map((p) => ({
-    park_id: p.park_id,
-    park_name: p.park_name,
+  const parks: Park[] = (parksRes.data ?? []).map((p: Record<string, unknown>) => ({
+    park_id: s(p.park_id),
+    park_name: s(p.park_name),
     membership_type: s(p.membership_type),
     state: s(p.state),
     city: s(p.city),
     region: s(p.region),
     address: s(p.address),
-    lat: p.lat,
-    lon: p.lon,
+    lat: num(p.gps_lat),
+    lon: num(p.gps_lon),
     big_rig_friendly: s(p.big_rig_friendly),
     cell_quality: s(p.cell_quality),
     key_amenities: s(p.key_amenities),
@@ -128,8 +148,8 @@ async function fetchAll(): Promise<SheetsPayload> {
     notes: s(p.notes),
   }));
 
-  const reviews: Review[] = (communityRes.data ?? []).map((r) => ({
-    review_id: r.review_id,
+  const reviews: Review[] = (communityRes.data ?? []).map((r: Record<string, unknown>) => ({
+    review_id: s(r.review_id),
     park_id: s(r.park_id),
     park_name: s(r.park_name),
     source_type: s(r.source_type),
@@ -142,20 +162,22 @@ async function fetchAll(): Promise<SheetsPayload> {
     raw_quote: s(r.raw_quote),
   }));
 
-  const personal: PersonalReview[] = (personalRes.data ?? []).map((r) => ({
-    entry_id: r.entry_id,
-    park_id: s(r.park_id),
-    park_name: s(r.park_name),
-    stay_start: s(r.stay_start),
-    stay_end: s(r.stay_end),
-    rating_overall: r.rating_overall ?? "",
-    rating_sites: r.rating_sites ?? undefined,
-    rating_amenities: r.rating_amenities ?? undefined,
-    rating_cell: r.rating_cell ?? undefined,
-    big_rig_verdict: s(r.big_rig_verdict),
-    tags: s(r.tags),
-    notes: s(r.notes),
-  }));
+  const personal: PersonalReview[] = (personalRes.data ?? [])
+    .map((r: Record<string, unknown>) => ({
+      entry_id: s(r.entry_id),
+      park_id: s(r.park_id),
+      park_name: s(r.park_name),
+      stay_start: s(r.stay_start),
+      stay_end: s(r.stay_end),
+      rating_overall: (r.rating_overall as number | string) ?? "",
+      rating_sites: (r.rating_sites as number | string) ?? undefined,
+      rating_amenities: (r.rating_amenities as number | string) ?? undefined,
+      rating_cell: (r.rating_cell as number | string) ?? undefined,
+      big_rig_verdict: s(r.big_rig_verdict),
+      tags: s(r.tags),
+      notes: s(r.notes),
+    }))
+    .sort((a, b) => (b.stay_start || "").localeCompare(a.stay_start || ""));
 
   return { parks, reviews, personal, fetched_at: new Date().toISOString() };
 }
@@ -199,7 +221,7 @@ export function useAddPersonalReview() {
         .select("entry_id")
         .single();
       if (error) throw error;
-      return { ok: true, entry_id: data.entry_id as string };
+      return { ok: true, entry_id: (data as { entry_id: string }).entry_id };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   });
