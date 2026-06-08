@@ -57,7 +57,7 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
-      <MarkerClusterGroup chunkedLoading maxClusterRadius={45}>
+      <MarkerClusterGroup chunkedLoading maxClusterRadius={25} disableClusteringAtZoom={8}>
         {items.map(({ park, label }) => (
           <Marker
             key={park.park_id}
