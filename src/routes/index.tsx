@@ -63,7 +63,7 @@ function Index() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="light" position="top-center" />
       <header className="z-30 border-b border-border/60 bg-card/80 backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
           <div className="flex items-center gap-2">

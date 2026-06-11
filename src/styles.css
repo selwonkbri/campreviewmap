@@ -96,9 +96,9 @@
   }
 }
 
-/* Leaflet overrides for dark theme */
+/* Leaflet overrides for light theme */
 .leaflet-container {
-  background: oklch(0.16 0.02 200);
+  background: oklch(0.94 0.01 200);
   font-family: var(--font-sans);
 }
 .leaflet-control-attribution,
@@ -113,22 +113,22 @@
 .marker-cluster-small,
 .marker-cluster-medium,
 .marker-cluster-large {
-  background: oklch(0.7 0.18 50 / 0.25) !important;
+  background: oklch(0.65 0.2 55 / 0.3) !important;
 }
 .marker-cluster-small div,
 .marker-cluster-medium div,
 .marker-cluster-large div {
   background: var(--ember) !important;
-  color: oklch(0.15 0.02 50) !important;
+  color: oklch(0.98 0.005 100) !important;
   font-weight: 700;
 }
 
 .park-marker {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 999px;
-  border: 2px solid oklch(1 0 0 / 0.85);
-  box-shadow: 0 4px 12px oklch(0 0 0 / 0.5);
+  border: 2.5px solid oklch(0.15 0.02 100 / 0.85);
+  box-shadow: 0 3px 10px oklch(0 0 0 / 0.35);
 }
 .park-marker.positive { background: var(--sentiment-positive); }
 .park-marker.mixed    { background: var(--sentiment-mixed); }
