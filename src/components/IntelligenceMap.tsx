@@ -16,8 +16,8 @@ function makeIcon(label: string) {
   return L.divIcon({
     className: "",
     html: `<div class="park-marker ${label}"></div>`,
-    iconSize: [22, 22],
-    iconAnchor: [11, 11],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 }
 
