@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import type { DateRange } from "react-day-picker";
 import {
   useSheets,
   sentimentScore,
@@ -14,6 +16,19 @@ import {
 } from "@/lib/parks";
 import { DEFAULT_TRIP, type TripSelection } from "@/lib/booking";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
+
+function ymd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function parseYmd(s: string): Date | undefined {
+  if (!s) return undefined;
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y || !m || !d) return undefined;
+  return new Date(y, m - 1, d);
+}
 
 const IntelligenceMap = lazy(() =>
   import("@/components/IntelligenceMap").then((m) => ({ default: m.IntelligenceMap })),
@@ -242,10 +257,27 @@ function Index() {
 function TripPicker({ trip, onChange }: { trip: TripSelection; onChange: (t: TripSelection) => void }) {
   const set = <K extends keyof TripSelection>(k: K, v: TripSelection[K]) => onChange({ ...trip, [k]: v });
   const guests = trip.adults + trip.children;
+  const range: DateRange | undefined =
+    trip.from || trip.to
+      ? { from: parseYmd(trip.from), to: parseYmd(trip.to) }
+      : undefined;
   const label =
     trip.from && trip.to
       ? `${trip.from.slice(5)} → ${trip.to.slice(5)}`
-      : "Trip";
+      : trip.from
+        ? `${trip.from.slice(5)} → pick depart`
+        : "Trip";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const handleRange = (r: DateRange | undefined) => {
+    onChange({
+      ...trip,
+      from: r?.from ? ymd(r.from) : "",
+      to: r?.to ? ymd(r.to) : "",
+    });
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -255,25 +287,29 @@ function TripPicker({ trip, onChange }: { trip: TripSelection; onChange: (t: Tri
           <span className="hidden sm:inline text-muted-foreground">· {guests}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-3 p-4">
+      <PopoverContent align="end" className="w-auto space-y-3 p-4">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Arrive</label>
-          <input
-            type="date"
-            value={trip.from}
-            onChange={(e) => set("from", e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          <p className="text-xs font-medium text-muted-foreground">
+            {!range?.from ? "Step 1: pick your arrival date" : !range?.to ? "Step 2: pick your departure date" : "Trip dates selected"}
+          </p>
+          <Calendar
+            mode="range"
+            selected={range}
+            onSelect={handleRange}
+            numberOfMonths={1}
+            disabled={{ before: today }}
+            defaultMonth={range?.from ?? today}
+            className="pointer-events-auto"
           />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Depart</label>
-          <input
-            type="date"
-            value={trip.to}
-            min={trip.from || undefined}
-            onChange={(e) => set("to", e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
+          {(trip.from || trip.to) && (
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline"
+              onClick={() => onChange({ ...trip, from: "", to: "" })}
+            >
+              Clear dates
+            </button>
+          )}
         </div>
         <div className="space-y-2 pt-1">
           <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
