@@ -64,12 +64,14 @@ function PanelContent({
   park,
   reviews,
   personal,
+  trip,
   onClose,
   onAdd,
 }: {
   park: Park;
   reviews: Review[];
   personal: PersonalReview[];
+  trip: TripSelection;
   onClose: () => void;
   onAdd: () => void;
 }) {
