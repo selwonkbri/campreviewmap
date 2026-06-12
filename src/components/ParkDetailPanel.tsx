@@ -17,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function ParkDetailPanel({ park, reviews, personal, onClose }: Props) {
+export function ParkDetailPanel({ park, reviews, personal, trip, onClose }: Props) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -42,6 +42,7 @@ export function ParkDetailPanel({ park, reviews, personal, onClose }: Props) {
               park={park}
               reviews={reviews}
               personal={personal}
+              trip={trip}
               onClose={onClose}
               onAdd={() => setShowForm(true)}
             />
