@@ -3,14 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Wifi, Truck, AlertTriangle, Plus, Calendar, Star } from "lucide-react";
 import type { Park, Review, PersonalReview } from "@/lib/parks";
 import { sentimentScore, bigRigWarnings, membershipLabel } from "@/lib/parks";
+import type { TripSelection } from "@/lib/booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
+import { ParkBookingButtons } from "./ParkBookingButtons";
 
 interface Props {
   park: Park | null;
   reviews: Review[];
   personal: PersonalReview[];
+  trip: TripSelection;
   onClose: () => void;
 }
 
