@@ -17,6 +17,8 @@ export type Park = {
   nearby_highlights: string;
   last_updated: string;
   notes: string;
+  official_url: string;
+  booking_url: string;
 };
 
 export type Review = {
@@ -146,6 +148,8 @@ async function fetchAll(): Promise<SheetsPayload> {
     nearby_highlights: s(p.nearby_highlights),
     last_updated: s(p.last_updated),
     notes: s(p.notes),
+    official_url: s(p.official_url),
+    booking_url: s(p.booking_url),
   }));
 
   const reviews: Review[] = (communityRes.data ?? []).map((r: Record<string, unknown>) => ({
