@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
-import { Search, MapIcon, List, Filter, Mountain, RefreshCw } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Search, MapIcon, List, Filter, Mountain, RefreshCw, Calendar as CalendarIcon, Users, Minus, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   useSheets,
   sentimentScore,
@@ -11,6 +12,7 @@ import {
   membershipLabel,
   type Park,
 } from "@/lib/parks";
+import { DEFAULT_TRIP, type TripSelection } from "@/lib/booking";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
 
 const IntelligenceMap = lazy(() =>
@@ -40,6 +42,19 @@ function Index() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "list">("map");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [trip, setTrip] = useState<TripSelection>(() => {
+    if (typeof window === "undefined") return DEFAULT_TRIP;
+    try {
+      const raw = localStorage.getItem("trip-selection");
+      return raw ? { ...DEFAULT_TRIP, ...JSON.parse(raw) } : DEFAULT_TRIP;
+    } catch {
+      return DEFAULT_TRIP;
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("trip-selection", JSON.stringify(trip)); } catch { /* ignore */ }
+  }, [trip]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
