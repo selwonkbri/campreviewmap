@@ -1,59 +1,58 @@
-## Migrate backend from Google Sheets to Lovable Cloud (Supabase)
+# Plan: "Book on Official Site" Deep Links
 
-### 1. Enable Lovable Cloud
-Provisions Postgres, auth, and the server-side Supabase clients. No Google Sheets calls after this is done.
+## 1. Data layer (`src/lib/parks.ts`)
+- Extend `Park` type with `official_url: string` and `booking_url: string`.
+- In `fetchAll()`, map `p.official_url` and `p.booking_url` from `parks_master` rows (using existing `s()` helper so nulls become `""`).
 
-### 2. Create three tables (via migration)
+## 2. Trip selection state (global, in `src/routes/index.tsx`)
+Add a single `trip` state object — currently the app has no date or party-size UI:
+```ts
+type TripSelection = { from: string; to: string; adults: number; children: number; animals: number };
+```
+Defaults: empty dates, `adults: 2`, `children: 0`, `animals: 0`. Persist to `localStorage` so the selection survives reloads.
 
-**`parks`** — one row per park
-- `park_id` (text, primary key) — keep existing IDs like `TT-NW-001`
-- `park_name`, `membership_type`, `state`, `city`, `region`, `address` (text)
-- `lat`, `lon` (double precision, nullable)
-- `big_rig_friendly`, `cell_quality`, `key_amenities`, `nearby_highlights`, `notes` (text)
-- `last_updated` (timestamptz, default now())
+Render a compact **Trip bar** in the header (below the search row, above filters or alongside the Filters button on desktop):
+- Two native `<input type="date">` fields (From / To) — keeps mobile UX native and avoids new dialog plumbing.
+- Three small number steppers: Adults, Children, Pets.
+- On mobile, collapse into a "Trip" pill button that opens a Sheet/Popover with the same controls.
 
-**`reviews_community`** — scraped/aggregated reviews
-- `review_id` (text, primary key)
-- `park_id` (text, FK → parks)
-- `park_name`, `source_type`, `source_url`, `sentiment`, `big_rig_flag`, `tags`, `summary`, `raw_quote` (text)
-- `review_date` (date)
+Pass `trip` down to `ParkDetailPanel`.
 
-**`reviews_personal`** — your field notes
-- `entry_id` (uuid, default gen_random_uuid(), primary key)
-- `park_id` (text, FK → parks)
-- `park_name` (text)
-- `stay_start`, `stay_end` (date, nullable)
-- `rating_overall`, `rating_sites`, `rating_amenities`, `rating_cell` (numeric, nullable)
-- `big_rig_verdict`, `tags`, `notes` (text)
-- `created_at` (timestamptz, default now())
+## 3. New helper + component
+Create `src/lib/booking.ts`:
+```ts
+export function buildBookingUrl(bookingUrl, { from, to, adults=2, children=0, animals=0 }) { ... }
+```
+Use `URLSearchParams` exactly as in the spec. `booking_url` already ends in `/`, so append `?` directly.
 
-### 3. RLS policies
-Per your choice (no auth required for personal reviews):
-- `parks` and `reviews_community`: public SELECT only.
-- `reviews_personal`: public SELECT and public INSERT, no UPDATE/DELETE from clients.
+Create `src/components/ParkBookingButtons.tsx`:
+- Props: `{ park, trip }`.
+- Renders up to two buttons inside a `flex gap-2`:
+  - **Book this park** (primary, `Button` default variant) — only if `park.booking_url`.
+    - If `trip.from` and `trip.to` are both set → `<a href={buildBookingUrl(...)}>`.
+    - If dates missing → render a disabled button with a tooltip "Select dates to book" (use existing `Tooltip` component).
+  - **View park page** (secondary, `Button variant="outline"`) — only if `park.official_url`.
+- Both anchors: `target="_blank"`, `rel="noopener noreferrer"`, with an `ExternalLink` icon.
+- If both URLs missing: render a muted `No official link available` line.
 
-### 4. One-time data import
-Run a server function (admin client) that:
-1. Fetches `parks_master`, `reviews_community`, `reviews_personal` from the live Google Sheet using the existing connector.
-2. Upserts into the three Supabase tables.
-3. Reports counts back to me. I'll run it once, confirm row counts, then we delete the import endpoint.
+## 4. Wire into `ParkDetailPanel`
+- Add `trip: TripSelection` prop, thread it through `PanelContent`.
+- Insert `<ParkBookingButtons park={park} trip={trip} />` directly above the existing "Add personal field notes" button so booking is the primary action when the panel opens.
 
-Coordinates fallback (`src/data/coords-cache.json`) is applied during the import for parks with empty GPS, then the cache file is deleted.
+## 5. Edge cases (per spec)
+- Either URL null → hide that button.
+- Both null → muted note.
+- Dates not selected → Book button disabled with tooltip (preferred over linking bare URL).
+- Date format strictly `YYYY-MM-DD` (the native date input already returns this; no locale conversion).
 
-### 5. Replace the data layer
-- Rewrite `src/routes/api/sheets.ts` → `src/routes/api/data.ts` (or delete it and use `createServerFn`s) backed by Supabase.
-- Update `src/lib/parks.ts`:
-  - `useSheets()` → `useParksData()` reading from Supabase via a server fn (parks + community + personal in one call).
-  - `useAddPersonalReview()` → inserts into `reviews_personal` via Supabase.
-- `PersonalReviewForm` and `ParkDetailPanel` keep their current props/shape — only the data source changes.
-- Header "Sync" indicator stays but now reflects the React Query fetch time against Supabase.
+## 6. Out of scope
+- No schema changes (columns already exist).
+- No changes to map markers or list rows — booking actions live in the detail panel only.
+- No analytics/tracking on click.
 
-### 6. Disconnect Google Sheets
-- Remove the `google_sheets` connector usage from code.
-- Delete `src/data/coords-cache.json` and `src/data/parks.json` once the import is verified.
-- Remove `GOOGLE_SHEETS_API_KEY` from secrets.
-
-### Result
-- App reads/writes against Supabase only.
-- Field-note submissions persist instantly with no third-party dependency.
-- Schema mirrors the current sheet, so the UI and types barely change.
+## Files touched
+- `src/lib/parks.ts` — add two fields to `Park` + mapping.
+- `src/lib/booking.ts` — new, `buildBookingUrl`.
+- `src/components/ParkBookingButtons.tsx` — new.
+- `src/components/ParkDetailPanel.tsx` — render booking buttons, accept `trip` prop.
+- `src/routes/index.tsx` — trip state + header trip bar + pass `trip` to panel.

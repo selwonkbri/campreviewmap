@@ -3,18 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Wifi, Truck, AlertTriangle, Plus, Calendar, Star } from "lucide-react";
 import type { Park, Review, PersonalReview } from "@/lib/parks";
 import { sentimentScore, bigRigWarnings, membershipLabel } from "@/lib/parks";
+import type { TripSelection } from "@/lib/booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
+import { ParkBookingButtons } from "./ParkBookingButtons";
 
 interface Props {
   park: Park | null;
   reviews: Review[];
   personal: PersonalReview[];
+  trip: TripSelection;
   onClose: () => void;
 }
 
-export function ParkDetailPanel({ park, reviews, personal, onClose }: Props) {
+export function ParkDetailPanel({ park, reviews, personal, trip, onClose }: Props) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -39,6 +42,7 @@ export function ParkDetailPanel({ park, reviews, personal, onClose }: Props) {
               park={park}
               reviews={reviews}
               personal={personal}
+              trip={trip}
               onClose={onClose}
               onAdd={() => setShowForm(true)}
             />
@@ -60,12 +64,14 @@ function PanelContent({
   park,
   reviews,
   personal,
+  trip,
   onClose,
   onAdd,
 }: {
   park: Park;
   reviews: Review[];
   personal: PersonalReview[];
+  trip: TripSelection;
   onClose: () => void;
   onAdd: () => void;
 }) {
@@ -130,6 +136,8 @@ function PanelContent({
             </ul>
           </section>
         )}
+
+        <ParkBookingButtons park={park} trip={trip} />
 
         <Button onClick={onAdd} className="w-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
           <Plus className="h-4 w-4" /> Add personal field notes

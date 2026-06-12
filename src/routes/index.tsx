@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
-import { Search, MapIcon, List, Filter, Mountain, RefreshCw } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Search, MapIcon, List, Filter, Mountain, RefreshCw, Calendar as CalendarIcon, Users, Minus, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   useSheets,
   sentimentScore,
@@ -11,6 +12,7 @@ import {
   membershipLabel,
   type Park,
 } from "@/lib/parks";
+import { DEFAULT_TRIP, type TripSelection } from "@/lib/booking";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
 
 const IntelligenceMap = lazy(() =>
@@ -40,6 +42,19 @@ function Index() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "list">("map");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [trip, setTrip] = useState<TripSelection>(() => {
+    if (typeof window === "undefined") return DEFAULT_TRIP;
+    try {
+      const raw = localStorage.getItem("trip-selection");
+      return raw ? { ...DEFAULT_TRIP, ...JSON.parse(raw) } : DEFAULT_TRIP;
+    } catch {
+      return DEFAULT_TRIP;
+    }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("trip-selection", JSON.stringify(trip)); } catch { /* ignore */ }
+  }, [trip]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -103,6 +118,8 @@ function Index() {
                   ? "Just synced"
                   : `${syncedAgo}m ago`}
           </Button>
+
+          <TripPicker trip={trip} onChange={setTrip} />
 
           <Button
             variant="outline"
@@ -215,8 +232,88 @@ function Index() {
         park={selected}
         reviews={reviews}
         personal={data?.personal ?? []}
+        trip={trip}
         onClose={() => setSelectedId(null)}
       />
+    </div>
+  );
+}
+
+function TripPicker({ trip, onChange }: { trip: TripSelection; onChange: (t: TripSelection) => void }) {
+  const set = <K extends keyof TripSelection>(k: K, v: TripSelection[K]) => onChange({ ...trip, [k]: v });
+  const guests = trip.adults + trip.children;
+  const label =
+    trip.from && trip.to
+      ? `${trip.from.slice(5)} → ${trip.to.slice(5)}`
+      : "Trip";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5">
+          <CalendarIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">{label}</span>
+          <span className="hidden sm:inline text-muted-foreground">· {guests}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 space-y-3 p-4">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Arrive</label>
+          <input
+            type="date"
+            value={trip.from}
+            onChange={(e) => set("from", e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Depart</label>
+          <input
+            type="date"
+            value={trip.to}
+            min={trip.from || undefined}
+            onChange={(e) => set("to", e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="space-y-2 pt-1">
+          <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <Users className="h-3.5 w-3.5" /> Party
+          </p>
+          <Stepper label="Adults" value={trip.adults} min={1} onChange={(v) => set("adults", v)} />
+          <Stepper label="Children" value={trip.children} min={0} onChange={(v) => set("children", v)} />
+          <Stepper label="Pets" value={trip.animals} min={0} onChange={(v) => set("animals", v)} />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function Stepper({ label, value, min, onChange }: { label: string; value: number; min: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm">{label}</span>
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+        >
+          <Minus className="h-3 w-3" />
+        </Button>
+        <span className="w-5 text-center text-sm tabular-nums">{value}</span>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => onChange(value + 1)}
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }
