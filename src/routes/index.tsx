@@ -287,7 +287,7 @@ function TripPicker({ trip, onChange }: { trip: TripSelection; onChange: (t: Tri
           <span className="hidden sm:inline text-muted-foreground">· {guests}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-auto space-y-3 p-4">
+      <PopoverContent align="end" side="bottom" sideOffset={8} collisionPadding={8} className="w-auto space-y-3 p-4 z-[1000]">
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground">
             {!range?.from ? "Step 1: pick your arrival date" : !range?.to ? "Step 2: pick your departure date" : "Trip dates selected"}
