@@ -224,7 +224,7 @@ function Index() {
         <div className={`${view === "map" ? "block" : "hidden"} lg:block`}>
           {isLoading ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-              Loading parks from Google Sheets…
+              Loading camps…
             </div>
           ) : (
             <Suspense
