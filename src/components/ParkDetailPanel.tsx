@@ -141,7 +141,7 @@ function PanelContent({
           </section>
         )}
 
-        <ParkBookingButtons park={park} trip={trip} />
+        <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
 
         <Button onClick={onAdd} className="w-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
           <Plus className="h-4 w-4" /> Add personal field notes
