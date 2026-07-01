@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvent } from "react-leaflet";
 import type { Park, Review } from "@/lib/parks";
-import { sentimentScore } from "@/lib/parks";
+import { sentimentScore, scoreToColor } from "@/lib/parks";
 
 interface Props {
   parks: Park[];
@@ -19,13 +19,13 @@ function sizeForZoom(z: number) {
 }
 
 const iconCache = new Map<string, L.DivIcon>();
-function getIcon(label: string, size: number, selected: boolean) {
-  const key = `${label}|${size}|${selected ? "s" : "n"}`;
+function getIcon(color: string, size: number, selected: boolean) {
+  const key = `${color}|${size}|${selected ? "s" : "n"}`;
   let icon = iconCache.get(key);
   if (!icon) {
     icon = L.divIcon({
       className: "",
-      html: `<div class="park-marker ${label}${selected ? " is-selected" : ""}" style="width:${size}px;height:${size}px"></div>`,
+      html: `<div class="park-marker${selected ? " is-selected" : ""}" style="width:${size}px;height:${size}px;background:radial-gradient(circle at 35% 35%, ${color}, color-mix(in oklch, ${color} 75%, black))"></div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
@@ -33,6 +33,7 @@ function getIcon(label: string, size: number, selected: boolean) {
   }
   return icon;
 }
+
 
 function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
   const map = useMap();
