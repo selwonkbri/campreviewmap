@@ -142,7 +142,5 @@
   border-width: 2.5px;
   box-shadow: 0 0 0 3px oklch(1 0 0 / 0.9), 0 3px 10px oklch(0 0 0 / 0.5);
 }
-.park-marker.positive { background: var(--sentiment-positive); }
-.park-marker.mixed    { background: var(--sentiment-mixed); }
-.park-marker.negative { background: var(--sentiment-negative); }
-.park-marker.unknown  { background: var(--sentiment-unknown); }
+.park-marker { background: var(--sentiment-unknown); }
+
