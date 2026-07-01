@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvent } from "react-leaflet";
 import type { Park, Review } from "@/lib/parks";
-import { sentimentScore } from "@/lib/parks";
+import { sentimentScore, scoreToColor } from "@/lib/parks";
 
 interface Props {
   parks: Park[];
@@ -19,13 +19,13 @@ function sizeForZoom(z: number) {
 }
 
 const iconCache = new Map<string, L.DivIcon>();
-function getIcon(label: string, size: number, selected: boolean) {
-  const key = `${label}|${size}|${selected ? "s" : "n"}`;
+function getIcon(color: string, size: number, selected: boolean) {
+  const key = `${color}|${size}|${selected ? "s" : "n"}`;
   let icon = iconCache.get(key);
   if (!icon) {
     icon = L.divIcon({
       className: "",
-      html: `<div class="park-marker ${label}${selected ? " is-selected" : ""}" style="width:${size}px;height:${size}px"></div>`,
+      html: `<div class="park-marker${selected ? " is-selected" : ""}" style="width:${size}px;height:${size}px;background:radial-gradient(circle at 35% 35%, ${color}, color-mix(in oklch, ${color} 75%, black))"></div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
@@ -33,6 +33,7 @@ function getIcon(label: string, size: number, selected: boolean) {
   }
   return icon;
 }
+
 
 function ZoomWatcher({ onZoom }: { onZoom: (z: number) => void }) {
   const map = useMap();
@@ -63,7 +64,10 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
     () =>
       parks
         .filter((p) => p.lat != null && p.lon != null)
-        .map((p) => ({ park: p, ...sentimentScore(p.park_id, reviews) })),
+        .map((p) => {
+          const s = sentimentScore(p.park_id, reviews);
+          return { park: p, ...s, color: scoreToColor(s.score, s.count > 0) };
+        }),
     [parks, reviews],
   );
 
@@ -82,11 +86,11 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <ZoomWatcher onZoom={setZoom} />
-      {items.map(({ park, label }) => (
+      {items.map(({ park, color }) => (
         <Marker
           key={park.park_id}
           position={[park.lat as number, park.lon as number]}
-          icon={getIcon(label, park.park_id === selectedId ? size + 6 : size, park.park_id === selectedId)}
+          icon={getIcon(color, park.park_id === selectedId ? size + 6 : size, park.park_id === selectedId)}
           eventHandlers={{ click: () => onSelect(park.park_id) }}
           zIndexOffset={park.park_id === selectedId ? 1000 : 0}
         />
@@ -95,3 +99,4 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
     </MapContainer>
   );
 }
+

@@ -88,11 +88,47 @@ export function sentimentScore(
   const map: Record<string, number> = { positive: 1, mixed: 0, negative: -1 };
   const total = r.reduce((s, x) => s + (map[x.sentiment] ?? 0), 0);
   const score = total / r.length;
+
+  // Bias toward "mixed" — only clearly one-sided parks get a strong label.
+  // Small samples (< 4 reviews) stay "mixed" unless every review agrees.
+  const pos = r.filter((x) => x.sentiment === "positive").length;
+  const neg = r.filter((x) => x.sentiment === "negative").length;
+  const majorityShare = 0.6;
+
   let label: Sentiment = "mixed";
-  if (score > 0.33) label = "positive";
-  else if (score < -0.33) label = "negative";
+  if (r.length < 4) {
+    if (pos === r.length) label = "positive";
+    else if (neg === r.length) label = "negative";
+  } else {
+    if (score >= 0.6 && pos / r.length >= majorityShare) label = "positive";
+    else if (score <= -0.6 && neg / r.length >= majorityShare) label = "negative";
+  }
   return { score, label, count: r.length };
 }
+
+// Continuous color from raw score (-1..+1): red → amber → green.
+// Returns an oklch() color string usable as a CSS background.
+export function scoreToColor(score: number, hasData = true): string {
+  if (!hasData) return "oklch(0.55 0.02 200)"; // unknown gray
+  const s = Math.max(-1, Math.min(1, score));
+  // Anchor hues: negative red ~25, mixed amber ~80, positive green ~145
+  // Interpolate hue + lightness + chroma between anchors.
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  let l: number, c: number, h: number;
+  if (s >= 0) {
+    const t = s; // 0..1 amber → green
+    l = lerp(0.72, 0.55, t);
+    c = lerp(0.18, 0.2, t);
+    h = lerp(80, 145, t);
+  } else {
+    const t = -s; // 0..1 amber → red
+    l = lerp(0.72, 0.55, t);
+    c = lerp(0.18, 0.22, t);
+    h = lerp(80, 25, t);
+  }
+  return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)})`;
+}
+
 
 export function bigRigWarnings(park: Park, allReviews: Review[]) {
   const flags = allReviews
