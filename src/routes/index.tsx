@@ -134,7 +134,7 @@ function Index() {
                   : `${syncedAgo}m ago`}
           </Button>
 
-          <TripPicker trip={trip} onChange={setTrip} />
+
 
           <Button
             variant="outline"
