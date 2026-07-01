@@ -64,7 +64,10 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
     () =>
       parks
         .filter((p) => p.lat != null && p.lon != null)
-        .map((p) => ({ park: p, ...sentimentScore(p.park_id, reviews) })),
+        .map((p) => {
+          const s = sentimentScore(p.park_id, reviews);
+          return { park: p, ...s, color: scoreToColor(s.score, s.count > 0) };
+        }),
     [parks, reviews],
   );
 
@@ -83,11 +86,11 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
       <ZoomWatcher onZoom={setZoom} />
-      {items.map(({ park, label }) => (
+      {items.map(({ park, color }) => (
         <Marker
           key={park.park_id}
           position={[park.lat as number, park.lon as number]}
-          icon={getIcon(label, park.park_id === selectedId ? size + 6 : size, park.park_id === selectedId)}
+          icon={getIcon(color, park.park_id === selectedId ? size + 6 : size, park.park_id === selectedId)}
           eventHandlers={{ click: () => onSelect(park.park_id) }}
           zIndexOffset={park.park_id === selectedId ? 1000 : 0}
         />
@@ -96,3 +99,4 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
     </MapContainer>
   );
 }
+
