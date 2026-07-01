@@ -248,6 +248,7 @@ function Index() {
         reviews={reviews}
         personal={data?.personal ?? []}
         trip={trip}
+        onTripChange={setTrip}
         onClose={() => setSelectedId(null)}
       />
     </div>
