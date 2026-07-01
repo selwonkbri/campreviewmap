@@ -67,6 +67,7 @@ function PanelContent({
   reviews,
   personal,
   trip,
+  onTripChange,
   onClose,
   onAdd,
 }: {
@@ -74,6 +75,7 @@ function PanelContent({
   reviews: Review[];
   personal: PersonalReview[];
   trip: TripSelection;
+  onTripChange: (t: TripSelection) => void;
   onClose: () => void;
   onAdd: () => void;
 }) {
