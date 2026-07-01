@@ -1,12 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { Search, MapIcon, List, Filter, Mountain, RefreshCw, Calendar as CalendarIcon, Users, Minus, Plus } from "lucide-react";
+import { Search, MapIcon, List, Filter, Mountain, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import type { DateRange } from "react-day-picker";
 import {
   useSheets,
   sentimentScore,
@@ -17,18 +14,7 @@ import {
 import { DEFAULT_TRIP, type TripSelection } from "@/lib/booking";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
 
-function ymd(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-function parseYmd(s: string): Date | undefined {
-  if (!s) return undefined;
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return undefined;
-  return new Date(y, m - 1, d);
-}
+
 
 const IntelligenceMap = lazy(() =>
   import("@/components/IntelligenceMap").then((m) => ({ default: m.IntelligenceMap })),
