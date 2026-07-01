@@ -14,10 +14,11 @@ interface Props {
   reviews: Review[];
   personal: PersonalReview[];
   trip: TripSelection;
+  onTripChange: (t: TripSelection) => void;
   onClose: () => void;
 }
 
-export function ParkDetailPanel({ park, reviews, personal, trip, onClose }: Props) {
+export function ParkDetailPanel({ park, reviews, personal, trip, onTripChange, onClose }: Props) {
   const [showForm, setShowForm] = useState(false);
 
   return (
@@ -43,6 +44,7 @@ export function ParkDetailPanel({ park, reviews, personal, trip, onClose }: Prop
               reviews={reviews}
               personal={personal}
               trip={trip}
+              onTripChange={onTripChange}
               onClose={onClose}
               onAdd={() => setShowForm(true)}
             />
@@ -65,6 +67,7 @@ function PanelContent({
   reviews,
   personal,
   trip,
+  onTripChange,
   onClose,
   onAdd,
 }: {
@@ -72,6 +75,7 @@ function PanelContent({
   reviews: Review[];
   personal: PersonalReview[];
   trip: TripSelection;
+  onTripChange: (t: TripSelection) => void;
   onClose: () => void;
   onAdd: () => void;
 }) {
@@ -137,7 +141,7 @@ function PanelContent({
           </section>
         )}
 
-        <ParkBookingButtons park={park} trip={trip} />
+        <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
 
         <Button onClick={onAdd} className="w-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
           <Plus className="h-4 w-4" /> Add personal field notes
