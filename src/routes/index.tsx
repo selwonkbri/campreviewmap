@@ -36,7 +36,7 @@ function Index() {
   );
 
   const [query, setQuery] = useState("");
-  const [membership, setMembership] = useState<"all" | "TT" | "Encore">("all");
+  const [membership, setMembership] = useState<"all" | "thousand-trails-standard" | "thousand-trails-trails-collection">("all");
   const [state, setState] = useState<string>("all");
   const [bigRig, setBigRig] = useState(false);
   const [minSent, setMinSent] = useState<"any" | "mixed" | "positive">("any");
@@ -157,8 +157,8 @@ function Index() {
                 onChange={(e) => setMembership(e.target.value as never)}
               >
                 <option value="all">All</option>
-                <option value="TT">Thousand Trails</option>
-                <option value="Encore">Encore</option>
+                <option value="thousand-trails-standard">Thousand Trails</option>
+                <option value="thousand-trails-trails-collection">Trails Collection</option>
               </select>
             </FilterChip>
             <FilterChip label="State">

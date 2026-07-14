@@ -60,15 +60,17 @@ export type SheetsPayload = {
 export type Sentiment = "positive" | "mixed" | "negative" | "unknown";
 
 export function membershipLabel(t: string) {
-  if (t?.startsWith("TT")) return "Thousand Trails";
-  if (t?.toLowerCase().includes("encore")) return "Encore";
+  if (t === "thousand-trails-standard") return "Thousand Trails";
+  if (t === "thousand-trails-trails-collection") return "Trails Collection";
   return t || "Other";
 }
 
-export function membershipBucket(t: string): "TT" | "Encore" | "Other" {
-  if (t?.startsWith("TT")) return "TT";
-  if (t?.toLowerCase().includes("encore")) return "Encore";
-  return "Other";
+export type MembershipBucket = "thousand-trails-standard" | "thousand-trails-trails-collection" | "other";
+
+export function membershipBucket(t: string): MembershipBucket {
+  if (t === "thousand-trails-standard") return "thousand-trails-standard";
+  if (t === "thousand-trails-trails-collection") return "thousand-trails-trails-collection";
+  return "other";
 }
 
 export function parseTags(raw: string): string[] {
