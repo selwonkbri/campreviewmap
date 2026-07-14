@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
 import { ParkBookingButtons } from "./ParkBookingButtons";
+import { ReservationCalc } from "./ReservationCalc";
 
 interface Props {
   park: Park | null;
