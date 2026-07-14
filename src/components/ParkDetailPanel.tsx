@@ -139,7 +139,10 @@ function PanelContent({
                 <li key={i} className="text-foreground/90">• {w}</li>
               ))}
             </ul>
-          </section>
+        </section>
+
+        <ReservationCalc park={park} />
+
         )}
 
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
