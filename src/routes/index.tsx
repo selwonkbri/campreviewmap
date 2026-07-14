@@ -36,7 +36,7 @@ function Index() {
   );
 
   const [query, setQuery] = useState("");
-  const [membership, setMembership] = useState<"all" | "TT" | "Encore">("all");
+  const [membership, setMembership] = useState<"all" | "thousand-trails-standard" | "thousand-trails-trails-collection">("all");
   const [state, setState] = useState<string>("all");
   const [bigRig, setBigRig] = useState(false);
   const [minSent, setMinSent] = useState<"any" | "mixed" | "positive">("any");
