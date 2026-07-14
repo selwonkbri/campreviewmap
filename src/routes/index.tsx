@@ -157,8 +157,8 @@ function Index() {
                 onChange={(e) => setMembership(e.target.value as never)}
               >
                 <option value="all">All</option>
-                <option value="TT">Thousand Trails</option>
-                <option value="Encore">Encore</option>
+                <option value="thousand-trails-standard">Thousand Trails</option>
+                <option value="thousand-trails-trails-collection">Trails Collection</option>
               </select>
             </FilterChip>
             <FilterChip label="State">
