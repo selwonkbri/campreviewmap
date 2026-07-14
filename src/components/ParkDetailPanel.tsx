@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
 import { ParkBookingButtons } from "./ParkBookingButtons";
+import { ReservationCalc } from "./ReservationCalc";
 
 interface Props {
   park: Park | null;
@@ -128,6 +129,8 @@ function PanelContent({
           )}
         </section>
 
+        <ReservationCalc park={park} />
+
         {warnings.length > 0 && (
           <section className="rounded-xl border border-destructive/40 bg-destructive/10 p-4">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-destructive-foreground">
@@ -140,6 +143,7 @@ function PanelContent({
             </ul>
           </section>
         )}
+
 
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
 
