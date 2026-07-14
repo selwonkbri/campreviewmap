@@ -129,6 +129,8 @@ function PanelContent({
           )}
         </section>
 
+        <ReservationCalc park={park} />
+
         {warnings.length > 0 && (
           <section className="rounded-xl border border-destructive/40 bg-destructive/10 p-4">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-destructive-foreground">
@@ -139,11 +141,9 @@ function PanelContent({
                 <li key={i} className="text-foreground/90">• {w}</li>
               ))}
             </ul>
-        </section>
-
-        <ReservationCalc park={park} />
-
+          </section>
         )}
+
 
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
 
