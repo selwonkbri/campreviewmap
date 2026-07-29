@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MapPin, Wifi, Truck, AlertTriangle, Plus, Calendar, Star } from "lucide-react";
+import { X, MapPin, Wifi, Truck, Plus, Calendar, Star } from "lucide-react";
 import type { Park, Review, PersonalReview } from "@/lib/parks";
-import { sentimentScore, bigRigWarnings, membershipLabel } from "@/lib/parks";
+import { sentimentScore, membershipLabel } from "@/lib/parks";
 import type { TripSelection } from "@/lib/booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +81,7 @@ function PanelContent({
   onAdd: () => void;
 }) {
   const sent = sentimentScore(park.park_id, reviews);
-  const warnings = bigRigWarnings(park, reviews);
+  
   const community = reviews.filter((r) => r.park_id === park.park_id);
   const mine = personal.filter((r) => r.park_id === park.park_id);
 
@@ -131,18 +131,6 @@ function PanelContent({
 
         <ReservationCalc park={park} />
 
-        {warnings.length > 0 && (
-          <section className="rounded-xl border border-destructive/40 bg-destructive/10 p-4">
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-destructive-foreground">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Big Rig Warnings
-            </h3>
-            <ul className="space-y-1 text-sm">
-              {warnings.map((w, i) => (
-                <li key={i} className="text-foreground/90">• {w}</li>
-              ))}
-            </ul>
-          </section>
-        )}
 
 
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
