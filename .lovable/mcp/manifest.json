@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "sdk_version": "0.25.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "campground-intelligence",
+      "version": "0.1.0",
+      "title": "Campground Intelligence"
+    },
+    "tools": [
+      {
+        "name": "search_parks",
+        "title": "Search campgrounds",
+        "description": "Search the Thousand Trails / Trails Collection campground database by name, state, region, membership type, or big-rig friendliness. Returns matching parks with their sentiment label.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Free text matched against park name, city, and region.",
+              "type": "string"
+            },
+            "state": {
+              "description": "Two-letter state code, e.g. WA.",
+              "type": "string"
+            },
+            "membership_type": {
+              "description": "Membership slug to filter on.",
+              "type": "string",
+              "enum": [
+                "thousand-trails-standard",
+                "thousand-trails-trails-collection"
+              ]
+            },
+            "big_rig_friendly": {
+              "description": "Filter by big-rig friendliness flag.",
+              "type": "string",
+              "enum": [
+                "yes",
+                "no",
+                "unknown"
+              ]
+            },
+            "limit": {
+              "description": "Max results, default 25, max 100.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_park",
+        "title": "Get campground details",
+        "description": "Full detail for one campground: location, amenities, notes, big-rig warnings, booking links, reservation window, community reviews, and personal field notes. Accepts a park_id or a park name.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "park_id": {
+              "description": "Exact park_id, e.g. tt-crescent-bar.",
+              "type": "string"
+            },
+            "park_name": {
+              "description": "Park name (partial match) if the id is unknown.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_community_reviews",
+        "title": "List community reviews",
+        "description": "List community reviews across campgrounds, optionally filtered by park, sentiment, or a tag (tags are comma-separated text).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "park_id": {
+              "description": "Restrict to one campground.",
+              "type": "string"
+            },
+            "sentiment": {
+              "type": "string",
+              "enum": [
+                "positive",
+                "mixed",
+                "negative"
+              ]
+            },
+            "tag": {
+              "description": "Match a single tag, e.g. waterfront.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Max results, default 25, max 100.",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "reservation_window",
+        "title": "Reservation booking window",
+        "description": "For a campground, returns the booking window (120 days for Thousand Trails standard, 60 for Trails Collection), the furthest date bookable today, and — if a desired arrival date is given — the exact date to call and reserve.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "park_id": {
+              "type": "string",
+              "description": "Campground park_id."
+            },
+            "stay_start": {
+              "description": "Desired arrival date as YYYY-MM-DD; returns the date to book.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "park_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_personal_review",
+        "title": "Add personal field note",
+        "description": "Add a personal field note / stay log for a campground (ratings, big-rig verdict, tags, raw notes). Writes to the same personal review feed shown in the app.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "park_id": {
+              "type": "string",
+              "description": "Campground park_id."
+            },
+            "stay_start": {
+              "description": "Arrival date YYYY-MM-DD.",
+              "type": "string"
+            },
+            "stay_end": {
+              "description": "Departure date YYYY-MM-DD.",
+              "type": "string"
+            },
+            "rating_overall": {
+              "description": "Overall rating 1-5.",
+              "type": "number"
+            },
+            "big_rig_verdict": {
+              "description": "Big-rig verdict in your own words.",
+              "type": "string"
+            },
+            "tags": {
+              "description": "Comma-separated tags.",
+              "type": "string"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Raw field notes."
+            }
+          },
+          "required": [
+            "park_id",
+            "notes"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
