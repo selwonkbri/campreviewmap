@@ -28,6 +28,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { data, isLoading, isFetching, refetch, error } = useSheets();
+  const dueCount = useDueCount();
   const parks = data?.parks ?? [];
   const reviews = data?.reviews ?? [];
 
@@ -121,6 +122,17 @@ function Index() {
                   : `${syncedAgo}m ago`}
           </Button>
 
+          <Link to="/watches">
+            <Button variant="outline" size="sm" className="relative gap-1.5">
+              <Bell className="h-4 w-4" />
+              <span className="hidden sm:inline">Watches</span>
+              {dueCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                  {dueCount}
+                </span>
+              )}
+            </Button>
+          </Link>
 
 
           <Button
