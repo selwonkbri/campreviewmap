@@ -81,7 +81,7 @@ function PanelContent({
   onAdd: () => void;
 }) {
   const sent = sentimentScore(park.park_id, reviews);
-  const warnings = bigRigWarnings(park, reviews);
+  
   const community = reviews.filter((r) => r.park_id === park.park_id);
   const mine = personal.filter((r) => r.park_id === park.park_id);
 
