@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { Search, MapIcon, List, Filter, Mountain, RefreshCw } from "lucide-react";
+import { Search, MapIcon, List, Filter, Mountain, RefreshCw, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,6 +11,7 @@ import {
   membershipLabel,
   type Park,
 } from "@/lib/parks";
+import { useDueCount } from "@/lib/watches";
 import { DEFAULT_TRIP, type TripSelection } from "@/lib/booking";
 import { ParkDetailPanel } from "@/components/ParkDetailPanel";
 
