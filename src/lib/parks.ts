@@ -132,21 +132,6 @@ export function scoreToColor(score: number, hasData = true): string {
 }
 
 
-export function bigRigWarnings(park: Park, allReviews: Review[]) {
-  const flags = allReviews
-    .filter(
-      (r) =>
-        r.park_id === park.park_id &&
-        r.big_rig_flag &&
-        r.big_rig_flag.toLowerCase() !== "none" &&
-        r.big_rig_flag.toLowerCase() !== "unknown",
-    )
-    .map((r) => r.big_rig_flag);
-  if (park.big_rig_friendly?.toLowerCase() === "no") {
-    flags.unshift("Park flagged: not big-rig friendly");
-  }
-  return Array.from(new Set(flags));
-}
 
 const QUERY_KEY = ["parks-data"] as const;
 
