@@ -235,7 +235,23 @@ function PanelContent({
             </div>
           )}
         </section>
+
+        {park.research_log && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="research" className="border-border/60">
+              <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Research history
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                  {park.research_log}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
       </div>
+
     </div>
   );
 }
