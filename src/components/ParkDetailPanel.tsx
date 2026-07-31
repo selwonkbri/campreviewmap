@@ -107,33 +107,62 @@ function PanelContent({
             <Truck className="h-3 w-3" />
             Big rig: {park.big_rig_friendly}
           </Badge>
-          <Badge variant="outline" className="gap-1">
-            <Wifi className="h-3 w-3" />
-            Cell: {park.cell_quality}
-          </Badge>
+          {!hasConnectivityData(park) && park.cell_quality && (
+            <Badge variant="outline" className="gap-1">
+              <Wifi className="h-3 w-3" />
+              Cell: {park.cell_quality}
+            </Badge>
+          )}
         </div>
       </header>
 
       <div className="space-y-6 px-6 py-6">
-        <section className="rounded-xl border border-border/60 bg-secondary/40 p-4">
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Intelligence Summary
-          </h3>
-          <p className="text-sm leading-relaxed">
-            {park.notes || `${community.length} community ${community.length === 1 ? "report" : "reports"}, sentiment ${sent.label}. ${park.key_amenities ? "Amenities: " + park.key_amenities + "." : ""}`}
-          </p>
-          {park.nearby_highlights && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground/80">Nearby:</span> {park.nearby_highlights}
-            </p>
-          )}
-        </section>
+        {park.summary && (
+          <section className="rounded-xl border border-border/60 bg-secondary/40 p-4">
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Overview
+            </h3>
+            <p className="text-sm leading-relaxed">{park.summary}</p>
+          </section>
+        )}
+
+        {park.key_amenities && (
+          <section>
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Amenities
+            </h3>
+            <p className="text-sm leading-relaxed">{park.key_amenities}</p>
+          </section>
+        )}
+
+        <ParkConnectivity park={park} />
+
+        {park.site_guidance && (
+          <section>
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Choosing a site
+            </h3>
+            <div className="space-y-2 text-sm leading-relaxed">
+              {park.site_guidance.split(/\n{1,}/).filter(Boolean).map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {park.nearby_highlights && (
+          <section>
+            <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Nearby
+            </h3>
+            <p className="text-sm leading-relaxed">{park.nearby_highlights}</p>
+          </section>
+        )}
 
         <ReservationCalc park={park} />
 
-
-
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
+
 
         <Button onClick={onAdd} className="w-full gap-2 bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
           <Plus className="h-4 w-4" /> Add personal field notes
