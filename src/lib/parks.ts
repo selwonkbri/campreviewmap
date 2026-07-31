@@ -16,10 +16,20 @@ export type Park = {
   key_amenities: string;
   nearby_highlights: string;
   last_updated: string;
-  notes: string;
+  summary: string;
+  research_log: string;
+  cell_tmobile: string;
+  cell_verizon: string;
+  cell_att: string;
+  cell_detail: string;
+  cell_last_verified: string;
+  cell_evidence_basis: string;
+  starlink_viability: string;
+  site_guidance: string;
   official_url: string;
   booking_url: string;
 };
+
 
 export type Review = {
   review_id: string;
