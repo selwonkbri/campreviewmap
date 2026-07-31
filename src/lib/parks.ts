@@ -16,10 +16,20 @@ export type Park = {
   key_amenities: string;
   nearby_highlights: string;
   last_updated: string;
-  notes: string;
+  summary: string;
+  research_log: string;
+  cell_tmobile: string;
+  cell_verizon: string;
+  cell_att: string;
+  cell_detail: string;
+  cell_last_verified: string;
+  cell_evidence_basis: string;
+  starlink_viability: string;
+  site_guidance: string;
   official_url: string;
   booking_url: string;
 };
+
 
 export type Review = {
   review_id: string;
@@ -170,7 +180,16 @@ async function fetchAll(): Promise<SheetsPayload> {
     key_amenities: s(p.key_amenities),
     nearby_highlights: s(p.nearby_highlights),
     last_updated: s(p.last_updated),
-    notes: s(p.notes),
+    summary: s(p.summary),
+    research_log: s(p.research_log),
+    cell_tmobile: s(p.cell_tmobile),
+    cell_verizon: s(p.cell_verizon),
+    cell_att: s(p.cell_att),
+    cell_detail: s(p.cell_detail),
+    cell_last_verified: s(p.cell_last_verified),
+    cell_evidence_basis: s(p.cell_evidence_basis),
+    starlink_viability: s(p.starlink_viability),
+    site_guidance: s(p.site_guidance),
     official_url: s(p.official_url),
     booking_url: s(p.booking_url),
   }));
