@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { PersonalReviewForm } from "./PersonalReviewForm";
 import { ParkBookingButtons } from "./ParkBookingButtons";
 import { ReservationCalc } from "./ReservationCalc";
+import { ParkConnectivity, hasConnectivityData } from "./ParkConnectivity";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface Props {
   park: Park | null;
