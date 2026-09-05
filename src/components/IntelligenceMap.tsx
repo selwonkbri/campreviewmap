@@ -83,7 +83,7 @@ export function IntelligenceMap({ parks, reviews, selectedId, onSelect }: Props)
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=cb1_2ty0_1_0d8580b92c99eb827efd9cb7"
       />
       <ZoomWatcher onZoom={setZoom} />
       {items.map(({ park, color }) => (
