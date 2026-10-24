@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, MapPin, Wifi, Truck, Plus, Calendar, Star } from "lucide-react";
 import type { Park, Review, PersonalReview } from "@/lib/parks";
 import { sentimentScore, membershipLabel } from "@/lib/parks";
+import { NPS_SITES, nearest, npsCategoryMeta } from "@/lib/nps";
 import type { TripSelection } from "@/lib/booking";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -166,6 +167,8 @@ function PanelContent({
           </section>
         )}
 
+        <NearbyNps park={park} />
+
         <ReservationCalc park={park} />
 
         <ParkBookingButtons park={park} trip={trip} onTripChange={onTripChange} />
@@ -253,6 +256,34 @@ function PanelContent({
       </div>
 
     </div>
+  );
+}
+
+function NearbyNps({ park }: { park: Park }) {
+  if (park.lat == null || park.lon == null) return null;
+  const close = nearest(park.lat, park.lon, NPS_SITES, 6, 120);
+  return (
+    <section>
+      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        National Park Service sites nearby
+      </h3>
+      {close.length === 0 ? (
+        <p className="text-sm text-muted-foreground">None within 120 miles.</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {close.map(({ item, miles }) => (
+            <li key={item.code} className="flex items-baseline gap-2 text-sm">
+              <span className="nps-swatch translate-y-[1px]" style={{ background: npsCategoryMeta(item.category).color }} />
+              <a href={item.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate hover:underline">
+                {item.name}
+              </a>
+              <span className="shrink-0 tabular-nums text-xs text-muted-foreground">{Math.round(miles)} mi</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-1.5 text-[11px] text-muted-foreground">Straight-line distance; drive time will be longer.</p>
+    </section>
   );
 }
 

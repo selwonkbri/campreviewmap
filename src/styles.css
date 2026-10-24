@@ -144,3 +144,30 @@
 }
 .park-marker { background: var(--sentiment-unknown); }
 
+
+/* National Park Service pins — teardrop shape so they read differently from campground dots */
+.nps-marker {
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  border: 2px solid oklch(1 0 0 / 0.95);
+  box-shadow: 0 1px 4px oklch(0 0 0 / 0.35);
+  position: relative;
+  transition: box-shadow 120ms ease;
+}
+.nps-marker::after {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 0.95);
+}
+.nps-marker:hover {
+  box-shadow: 0 2px 8px oklch(0 0 0 / 0.5);
+}
+.nps-swatch {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+}
